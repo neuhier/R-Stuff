@@ -9,12 +9,97 @@
 # mailto: sebastian.hoffmeister@statcon.de
 #-----------------------------------------------------------------------+
 
+
+# Definitive Screening Designs based on: Xiao, Lin, Bai - "Constructing Definitive Screening Desigsn Using Conference Matrices"
+defScreening = function(factors=3, response=1, randomize=TRUE) {
+  if(class(factors) == "character") p <- length(factors) else p <- factors # Factors
+  if(class(response) == "character") r <- length(response) else r <- response # Responses
+  
+  # Only design for up to 10 factors
+  if(p > 10) stop("Only designs up to 10 factors are implemented. Use 'definitiveScreening' for the calculation of larger designs.")
+  
+  design = as.data.frame(matrix(NA, ncol=p+r, nrow=2*p+1)) # Setup the design matrix
+  if(p %% 2 != 0) design = as.data.frame(matrix(NA, ncol=p+r, nrow=2*p+3))
+  if(p == 2) {
+    design[, 1:2] <- matrix(c(0,1,0,-1,0,   
+                              1,0,-1,0,0), ncol=2)
+  } else if(p == 3) {
+    design[, 1:3] <- matrix(c(0,0,1,-1,1,-1,-1,1,0,   
+                              1,-1,0,0,1,-1,1,-1,0,   
+                              -1,1,-1,1,0,0,-1,1,0), ncol=3)
+  } else if(p == 4) {
+    design[, 1:4] <- matrix(c(0,-1,-1,-1,0,1,1,1,0,
+                              1,0,1,-1,-1,0,-1,1,0,
+                              1,-1,0,1,-1,1,0,1,0,
+                              1,1,-1,0,-1,-1,1,0,0), ncol=4)
+  } else if(p == 5) {
+    design[, 1:5] <-matrix(c(0, 0, -1, 1, -1, 1, -1, 1, 1, -1,-1,1, 0,  
+                             -1, 1, 0, 0, -1, 1, -1, 1, -1, 1,1,-1, 0,   
+                             -1, 1, -1, 1, 0, 0, 1, -1, -1, 1,-1,1, 0,   
+                             -1, 1, -1, 1, 1, -1, 0, 0, 1, -1,1,-1, 0,   
+                             -1, 1, 1, -1, 1, -1, -1, 1, 0, 0,-1,1, 0), ncol=5) 
+  } else if(p == 6) {
+    design[, 1:6] <- matrix(c(0,1,1,1,1,1,0,-1,-1,-1,-1,-1,0,
+                              1,0,1,1,-1,-1,-1,0,-1,-1,1,1,0,
+                              1,1,0,-1,-1,1,-1,-1,0,1,1,-1,0,
+                              1,1,-1,0,1,-1,-1,-1,1,0,-1,1,0,
+                              1,-1,-1,1,0,1,-1,1,1,-1,0,-1,0,
+                              1,-1,1,-1,1,0,-1,1,-1,1,-1,0,0), ncol=6)
+      
+  } else if(p == 7) {
+    design[, 1:7] <-matrix(c(0,  0, 1, -1,  1, -1,  1, -1,  1, -1,  1, -1, -1,  1, -1,  1,0,   
+                             1, -1, 0,  0,  1, -1,  1, -1, -1,  1, -1,  1,  1, -1, -1,  1,0,   
+                             -1,  1, 1, -1,  0,  0,  1, -1, -1,  1,  1, -1,  1, -1,  1, -1,0,   
+                             1, -1,-1,  1,  1, -1,  0,  0, -1,  1,  1, -1, -1,  1,  1, -1,0,   
+                             1, -1, 1, -1, -1,  1,  1, -1,  0,  0, -1,  1, -1,  1,  1, -1,0,   
+                             -1,  1,-1,  1, -1,  1,  1, -1, -1,  1,  0,  0, -1,  1, -1,  1,0,   
+                             1, -1, 1, -1, -1,  1, -1,  1, -1,  1,  1, -1,  0,  0, -1,  1,0), ncol=7)
+  } else if(p == 8) {
+    design[, 1:8] <- matrix(c(0,-1,-1,-1,-1,-1,-1,-1,0,1,1,1,1,1,1,1,0,
+                              1,0,1,1,1,-1,-1,-1,-1,0,-1,-1,-1,1,1,1,0,
+                              1,-1,0,-1,1,1,1,-1,-1,1,0,1,-1,-1,-1,1,0,
+                              1,-1,1,0,-1,-1,1,1,-1,1,-1,0,1,1,-1,-1,0,
+                              1,-1,-1,1,0,1,-1,1,-1,1,1,-1,0,-1,1,-1,0,
+                              1,1,-1,1,-1,0,1,-1,-1,-1,1,-1,1,0,-1,1,0,
+                              1,1,-1,-1,1,-1,0,1,-1,-1,1,1,-1,1,0,-1,0,
+                              1,1,1,-1,-1,1,-1,0,-1,-1,-1,1,1,-1,1,0,0), ncol=8)
+  } else if(p == 9) {
+    design[, 1:9] <-matrix(c(0,  0, -1,  1, -1,  1, -1,  1,  1, -1, -1,  1, -1,  1,  1,-1, -1,  1, -1, 1, 0,
+                             -1,  1,  0,  0,  1, -1,  1, -1,  1, -1, -1,  1,  1, -1,  1,-1, -1,  1,  1,-1, 0,
+                             1, -1, -1,  1,  0,  0,  1, -1,  1, -1, -1,  1,  1, -1, -1, 1,  1, -1, -1, 1, 0,
+                             1, -1, -1,  1,  1, -1,  0,  0, -1,  1, -1,  1, -1,  1,  1,-1,  1, -1,  1,-1, 0,
+                             -1,  1, -1,  1,  1, -1, -1,  1,  0,  0,  1, -1,  1, -1,  1,-1,  1, -1, -1, 1, 0,
+                             -1,  1, -1,  1,  1, -1,  1, -1, -1,  1,  0, 0,  -1,  1, -1, 1, -1,  1, -1, 1, 0,
+                             1, -1, -1,  1,  1, -1, -1,  1,  1, -1,  1, -1,  0,  0, -1, 1, -1,  1,  1,-1, 0,
+                             -1,  1, -1,  1, -1,  1,  1, -1,  1, -1,  1, -1, -1,  1,  0, 0,  1, -1,  1,-1, 0,
+                             1, -1,  1, -1,  1, -1,  1, -1,  1, -1,  1, -1, -1,  1,  1,-1,  0,  0, -1, 1, 0), ncol=9)
+  } else if(p == 10) {
+    design[, 1:10] <- matrix(c(0,1,1,1,1,1,1,1,1,1,0,-1,-1,-1,-1,-1,-1,-1,-1,-1,0,
+                               1,0,-1,-1,-1,-1,1,1,1,1,-1,0,1,1,1,1,-1,-1,-1,-1,0,
+                               1,-1,0,-1,1,1,-1,-1,1,1,-1,1,0,1,-1,-1,1,1,-1,-1,0,
+                               1,-1,-1,0,1,1,1,1,-1,-1,-1,1,1,0,-1,-1,-1,-1,1,1,0,
+                               1,-1,1,1,0,-1,-1,1,-1,1,-1,1,-1,-1,0,1,1,-1,1,-1,0,
+                               1,-1,1,1,-1,0,1,-1,1,-1,-1,1,-1,-1,1,0,-1,1,-1,1,0,
+                               1,1,-1,1,-1,1,0,-1,-1,1,-1,-1,1,-1,1,-1,0,1,1,-1,0,
+                               1,1,-1,1,1,-1,-1,0,1,-1,-1,-1,1,-1,-1,1,1,0,-1,1,0,
+                               1,1,1,-1,-1,1,-1,-1,0,-1,-1,-1,-1,1,1,-1,1,-1,0,1,0,
+                               1,1,1,-1,1,-1,1,-1,-1,0,-1,-1,-1,1,-1,1,-1,1,1,0,0), ncol=10)
+  }
+  # Set colnames
+  if(class(factors) == "character" & class(response) == "character") colnames(design) = c(factors, response)
+  if(class(factors) == "character" & class(response) != "character") colnames(design) = c(factors, paste("Y", 1:r, sep=""))
+  if(class(factors) != "character" & class(response) == "character") colnames(design) = c(paste("X", 1:p, sep=""), response)
+  if(class(factors) != "character" & class(response) != "character") colnames(design) = c(paste("X", 1:p, sep=""), paste("Y", 1:r, sep=""))
+  if(randomize) design <- design[sample(1:nrow(design)),] # Randomiziation
+  design
+}
+
 # Function to return a definitve screening plan.Plans have been calculated with definitiveScreening(p, 1000, 50000).
 # factors - enter either a list of factor names, e.g. c("Temp", "Pressure") or the number of factors.
 # response - enter either a list of response names, e.g. c("Yield", "Cost") or the number of responses.
 # randomize - TRUE: randomize the result / FALSE: resulting design in standard order.
 
-defScreening = function(factors=3, response=1, randomize=TRUE) {
+defScreening.old = function(factors=3, response=1, randomize=TRUE) {
   if(class(factors) == "character") p <- length(factors) else p <- factors # Factors
   if(class(response) == "character") r <- length(response) else r <- response # Responses
   
